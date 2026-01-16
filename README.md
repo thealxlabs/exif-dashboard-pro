@@ -81,7 +81,7 @@ exif-dashboard-pro/
 │   └── data_processor.py     # Data analysis & statistics
 ├── web/
 │   └── app.py                # Streamlit web application
-├── requirements.txt          # Python dependencies
+|
 └── README.md                 # This file
 ```
 
