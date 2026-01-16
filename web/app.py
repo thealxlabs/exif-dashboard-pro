@@ -471,3 +471,5 @@ def display_dashboard(photos_data, show_gps, timeline_freq):
 
 if __name__ == "__main__":
     main()
+
+# Made with ❤️ in Toronto, Canada 🇨🇦 by Alexander Wondwossen (@alxgraphy)
