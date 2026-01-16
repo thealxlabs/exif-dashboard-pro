@@ -66,14 +66,23 @@ def main():
         st.header("⚙️ Settings")
         st.markdown("---")
         st.markdown("### Upload Photos")
-        st.info("Upload a ZIP file containing your photos or individual image files")
+        st.info("📦 **ZIP files**: Can contain nested folders - all photos will be scanned recursively!")
         
-        upload_type = st.radio("Upload method:", ["ZIP file", "Individual photos"])
+        upload_type = st.radio("Upload method:", ["ZIP file (supports nested folders)", "Individual photos"])
         
-        if upload_type == "ZIP file":
-            uploaded_file = st.file_uploader("Choose a ZIP file", type=['zip'])
+        if upload_type == "ZIP file (supports nested folders)":
+            uploaded_file = st.file_uploader(
+                "Choose a ZIP file with photos", 
+                type=['zip'],
+                help="Your ZIP can have folders within folders - we'll scan everything!"
+            )
         else:
-            uploaded_files = st.file_uploader("Choose photos", type=['jpg', 'jpeg', 'png', 'tiff'], accept_multiple_files=True)
+            uploaded_files = st.file_uploader(
+                "Choose photos", 
+                type=['jpg', 'jpeg', 'png', 'tiff'], 
+                accept_multiple_files=True,
+                help="Select multiple photos at once"
+            )
         
         st.markdown("---")
         st.markdown("### Analysis Options")
@@ -90,7 +99,7 @@ def main():
         st.markdown("Built with ❤️ by [alxgraphy](https://github.com/alxgraphy)")
     
     # Main content
-    if upload_type == "ZIP file" and uploaded_file is not None:
+    if upload_type == "ZIP file (supports nested folders)" and uploaded_file is not None:
         process_zip_upload(uploaded_file, show_gps, timeline_freq)
     elif upload_type == "Individual photos" and uploaded_files:
         process_individual_uploads(uploaded_files, show_gps, timeline_freq)
@@ -108,31 +117,32 @@ def show_welcome_screen():
         st.markdown("""
         ### How to use:
         1. **Upload your photos** using the sidebar
-           - Upload a ZIP file containing your photo collection
-           - Or upload individual photos
+           - 📦 **ZIP file**: Perfect for large collections with nested folders
+             - Example: `Photos/2024/January/Trip/IMG_001.jpg` ✅
+             - We'll scan ALL folders recursively!
+           - 📸 **Individual photos**: Select multiple files at once
         
         2. **Analyze** your photography habits
            - See which cameras and lenses you use most
            - Discover your preferred settings (ISO, aperture, focal length)
            - View when and where you take photos
         
-        3. **Export** your insights (coming soon)
-           - Download comprehensive reports
-           - Share your photography statistics
+        3. **Explore** your statistics
+           - Interactive charts and visualizations
+           - GPS location mapping
+           - Timeline analysis
         
-        ### Features:
-        - 📊 Interactive charts and visualizations
-        - 🗺️ GPS location mapping
-        - 📈 Timeline analysis
-        - 📸 Camera and lens statistics
-        - ⚙️ Settings analysis (ISO, aperture, shutter speed)
-        - 🌅 Time of day patterns
+        ### 💡 Tips:
+        - ZIP files can have folders within folders - we scan everything!
+        - Works best with original photos (not edited or social media versions)
+        - Photos must have EXIF metadata (most camera/phone photos do)
+        - Large collections (1000+ photos) take 1-2 minutes to process
         """)
 
 
 def process_zip_upload(uploaded_file, show_gps, timeline_freq):
-    """Process uploaded ZIP file"""
-    with st.spinner("Extracting and analyzing photos..."):
+    """Process uploaded ZIP file with nested folder support"""
+    with st.spinner("📦 Extracting ZIP and scanning all folders (including nested ones)..."):
         # Create temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
@@ -148,13 +158,18 @@ def process_zip_upload(uploaded_file, show_gps, timeline_freq):
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(extract_path)
             
-            # Analyze photos
+            st.info("🔍 Scanning all folders recursively for photos...")
+            
+            # Analyze photos (recursive=True scans all nested folders)
             analyzer = ExifAnalyzer()
-            photos_data = analyzer.scan_folder(str(extract_path))
+            photos_data = analyzer.scan_folder(str(extract_path), recursive=True)
             
             if not photos_data:
-                st.error("No valid photos with EXIF data found in the ZIP file.")
+                st.error("❌ No valid photos with EXIF data found in the ZIP file (checked all nested folders).")
+                st.info("💡 Make sure your photos are JPG, PNG, or TIFF with EXIF metadata intact.")
                 return
+            
+            st.success(f"✅ Found {len(photos_data)} photos across all folders!")
             
             # Process and display results
             display_dashboard(photos_data, show_gps, timeline_freq)
